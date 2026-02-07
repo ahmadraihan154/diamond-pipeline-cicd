@@ -1,3 +1,4 @@
+from zipfile import Path
 import mlflow
 import pandas as pd
 from lightgbm import LGBMRegressor
@@ -12,7 +13,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 warnings.filterwarnings(action='ignore')
 
 def train_model(n_estimators, max_depth):
-    data_path = 'diamond_preprocessing'
+    base_path = Path(__file__).resolve().parent.parent
+    data_path = base_path / "preprocessing" / "diamond_preprocessing"
     transformer = joblib.load(os.path.join(data_path, 'power_transformers.joblib'))
     price_transformer = transformer['price']
 
