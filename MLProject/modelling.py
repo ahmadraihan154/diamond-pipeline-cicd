@@ -39,7 +39,6 @@ def train_model(n_estimators, max_depth):
         mlflow.log_params(model.get_params())
         mlflow.log_metric("RMSE", rmse_skor)    
         mlflow.log_metric("R2", r2_skor)
-        mlflow.sklearn.log_model(model, artifact_path="model", input_example=X_test[:5])
 
         conda_path = Path(__file__).resolve().parent / "conda.yaml"
         mlflow.sklearn.log_model(model, artifact_path="model", conda_env=str(conda_path))
