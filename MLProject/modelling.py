@@ -9,7 +9,7 @@ import argparse
 import joblib
 from sklearn.metrics import mean_squared_error, r2_score 
 
-# Filtering warnings
+# Filter warnings
 warnings.filterwarnings(action='ignore')
 
 def train_model(n_estimators, max_depth):
