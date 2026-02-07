@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: processed-datasets
-          path: preprocessing/diamond_preprocessing/*.csv
+          path: preprocessing/diamond_preprocessing
 
   # JOB 2: Training and Delivering Model
   train-and-deliver-model:
