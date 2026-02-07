@@ -1,0 +1,99 @@
+name: CI/CD ML Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'preprocessing/**'
+      - 'dataset_raw/**'
+      - 'MLProject/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  # JOB 1: Preprocessing Datastet
+  preprocess-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.7'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run preprocessing script
+        run: |
+          python preprocessing/automate_preprocessing.py
+
+      - name: Upload processed dataset as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-datasets
+          path: preprocessing/diamond_preprocessing/*.csv
+
+  # JOB 2: Training and Delivering Model
+  train-and-deliver-model:
+    needs: preprocess-data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.7'
+
+      - name: Install ML dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Download processed dataset artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-datasets
+          path: preprocessing/diamond_preprocessing
+
+      - name: Run MLflow project
+        run: |
+          mlflow run MLProject --env-manager=local
+
+      - name: Get latest MLflow run_id
+        run: |
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          echo "Latest run_id: $RUN_ID"
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: mlruns/0/${{ env.RUN_ID }}/artifacts/model
+
+      - name: Build Docker Image from trained model
+        run: |
+          mlflow models build-docker \
+            --model-uri "runs:/${{ env.RUN_ID }}/model" \
+            --name diamond-model
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Tag Docker image
+        run: |
+          docker tag diamond-model \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/diamond-model:latest
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/diamond-model:latest
