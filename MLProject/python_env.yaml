@@ -1,5 +1,0 @@
-python: "3.10"
-build_dependencies:
-  - pip
-run_dependencies:
-  - pip

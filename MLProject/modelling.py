@@ -40,8 +40,8 @@ def train_model(n_estimators, max_depth):
         mlflow.log_metric("RMSE", rmse_skor)    
         mlflow.log_metric("R2", r2_skor)
 
-        python_env_path = Path(__file__).resolve().parent / "python_env.yaml"
-        mlflow.sklearn.log_model(model, artifact_path="model", python_env=str(python_env_path))
+        conda_path = Path(__file__).resolve().parent / "conda.yaml"
+        mlflow.sklearn.log_model(model, artifact_path="model", conda_env=str(conda_path))
 
         print(f'R2 Score : {r2_skor}')
         print(f'RMSE : {rmse_skor}')
