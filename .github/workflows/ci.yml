@@ -98,24 +98,3 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/diamond-model:latest
-  
-  # JOB 3: Deploy MLflow Model Server (API)
-  deploy-mlflow-server:
-    needs: train-and-deliver-model
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy MLflow model server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/diamond-model:latest
-            docker stop diamond-mlflow || true
-            docker rm diamond-mlflow || true
-            docker run -d \
-              --name diamond-mlflow \
-              -p 5000:5000 \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/diamond-model:latest
